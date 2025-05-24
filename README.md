@@ -1,4 +1,4 @@
-<h1>SMART-PC - ICML 2025</h1>
+<h1>SMART-PC - ICML 2025 🎉 </h1>
 <h3>Skeletal Model Adaptation for Robust Test-Time Training in Point Clouds</h3>
 
 📄 [Paper Link on arXiv](https://arxiv.org/pdf/2503.04953)
@@ -45,9 +45,9 @@ pip install --upgrade https://github.com/unlimblue/KNN_CUDA/releases/download/0.
 ## Data Preparation
 Our code currently supports three different datasets: [ModelNet40](https://arxiv.org/abs/1406.5670), [ShapeNetCore](https://arxiv.org/abs/1512.03012) and [ScanObjectNN](https://arxiv.org/abs/1908.04616).
 
-### Create Corrupted Datasets 
+### First Method: Create Corrupted Datasets 
   
-#### Download Clean Datasets
+#### 1. Download Clean Datasets
 To use these datasets with our code, first download them from the following sources:  
 - [ModelNet](https://shapenet.cs.stanford.edu/media/modelnet40_normal_resampled.zip) 
 
@@ -57,7 +57,7 @@ To use these datasets with our code, first download them from the following sour
 
 Then, extract all of these folders into the same directory for easier use.
 
-#### Adding corruptions to the data
+#### 2. Adding corruptions to the data
 To add distribution shifts to the data, corruptions from [ModelNet40-C](https://arxiv.org/abs/2201.12296) are used.  
 For experiments on corrupted ModelNet data, the ModelNet40-C dataset can be downloaded [here](https://drive.google.com/drive/folders/10YeQRh92r_WdL-Dnog2zQfFr03UW4qXX).  
 Compute the same corruptions for ShapeNetCore and ScanObjectNN, if needed.
@@ -71,7 +71,7 @@ Note that for computation of the corruptions "occlusion" and "lidar", model
 meshes are needed. These are computed with 
 the [open3d](http://www.open3d.org/docs/release/getting_started.html) library. 
 
-### Download Corrupted Datasets 
+### Second  Method: Download Corrupted Datasets 
 You can download the corrupted datasets from the following [Google Drive link](https://drive.google.com/drive/folders/1v2VP-K0x0TIsPjpmJox6j-CgVPMLhe6Q?usp=sharing).
 
 
