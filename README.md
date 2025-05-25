@@ -67,6 +67,7 @@ E.g. if your data for ModelNet-C is in `./data/tta_datasets/modelnet-c`, set the
 
 <p><strong><span style="color:#2a9d8f;">Online Mode:</span></strong> 
 Make sure <code>disable_bn_adaptation</code> is set to <code><strong>False</strong></code> in the config files.</p>
+
 ```
 CUDA_VISIBLE_DEVICES=0 python ttt.py --dataset_name <dataset_name> --online --grad_steps 1 --config cfgs/tta/tta_<dataset_name>.yaml --ckpts <path/to/pretrained/model>
 ```
