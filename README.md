@@ -72,8 +72,9 @@ Make sure <code>disable_bn_adaptation</code> is set to <code><strong>False</stro
 CUDA_VISIBLE_DEVICES=0 python ttt.py --dataset_name <dataset_name> --online --grad_steps 1 --config cfgs/tta/tta_<dataset_name>.yaml --ckpts <path/to/pretrained/model>
 ```
 
-standard mode:
-For running the `TTT-Standard`, following command can be used: 
+<p><strong><span style="color:#2a9d8f;">Standard Mode:</span></strong> 
+Make sure <code>disable_bn_adaptation</code> is set to <code><strong>True</strong></code> in the config files.</p>
+
 ```
 CUDA_VISIBLE_DEVICES=0 python ttt.py --dataset_name <dataset_name> --grad_steps 20 --config cfgs/tta/tta_<dataset_name>.yaml --ckpts <path/to/pretrained/model>
 ```
