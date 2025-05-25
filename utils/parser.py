@@ -15,12 +15,7 @@ def get_args():
     parser.add_argument('--online', action='store_true', help='online-adapt')
     # parser.add_argument('--online', action='store_true', default=True, help='online-adapt')
     parser.add_argument('--visualize_data', action='store_true', help='image creation')
-    # parser.add_argument('--ckpts', type=str, default="/export/livia/home/vision/Abahri/projects/SMART_PC/smart_pc/experiments/MATE/pretrain/modelnet/modelnet_src_only.pth", help='test used ckpt path')
-    # parser.add_argument('--ckpts', type=str, default="/export/livia/home/vision/Abahri/projects/SMART_PC/smart_pc/experiments/SMART_PC_N/pretrain/modelnet/normalize_None__aug_scale_transform_compute_loss_mean/pretrain_modelnet/pre_train/default/ckpt-best.pth", help='test used ckpt path')
-    # parser.add_argument('--ckpts', type=str, default="/export/livia/home/vision/Abahri/projects/SMART_PC/smart_pc/best_model_background.pth", help='test used ckpt path')
-    # parser.add_argument('--ckpts', type=str, default="/export/livia/home/vision/Abahri/projects/SMART_PC/smart_pc/experiments/SMART_PC_N/pretrain/modelnet/normalize_None__aug_scale_transform_compute_loss_mean/pretrain_modelnet/pre_train/default/ckpt-best.pth", help='test used ckpt path')
     parser.add_argument('--ckpts', type=str, default= None, help='test used ckpt path')
-    # parser.add_argument('--ckpts', type=str, default= "/export/livia/home/vision/Abahri/projects/SMART_PC/smart_pc/experiments/SMART_PC_N/pretrain/shapenetcore/normalize_None__aug_scale_transform/pretrain_shapenetcore/pre_train/default/ckpt-best.pth", help='test used ckpt path')
     parser.add_argument('--config', type=str, default= "./cfgs/tta/tta_modelnet.yaml", help='yaml config file')
     parser.add_argument('--group_norm', action='store_true', help='If Group Norm shall be used instead of Batch Norm')
     parser.add_argument('--test_source', default= False, action='store_true')
@@ -129,147 +124,10 @@ def get_args():
         args.exp_name = 'test_' + args.exp_name
     if args.mode is not None:
         args.exp_name = args.exp_name + '_' + args.mode
-    # args.experiment_path = os.path.join('./experiments', Path(args.config).stem, Path(args.config).parent.stem,
-    #                                     args.exp_name)
-    # args.tfboard_path = os.path.join('./experiments', Path(args.config).stem, Path(args.config).parent.stem, 'TFBoard',
-    #                                  args.exp_name)
-    
-    # args.experiment_path = os.path.join('./experiments/SMART_PC_N/pretrain/shapenetcore/normalize_None__aug_scale_transform_compute_loss_mean', Path(args.config).stem, Path(args.config).parent.stem,  
-    #                                     args.exp_name)
-    # args.tfboard_path = os.path.join('./experiments/SMART_PC_N/pretrain/shapenetcore/normalize_None__aug_scale_transform_compute_loss_mean', Path(args.config).stem, Path(args.config).parent.stem, 'TFBoard',
-    #                                  args.exp_name)           
-    
-    # args.experiment_path = os.path.join('./experiments/SMART_PC_N/adapt/scanobject/batch_2_without_augmentation/iter_1/normalize_None__aug_None__all_params_update_True__disable_bn_adaptation_False', Path(args.config).stem, Path(args.config).parent.stem,
-    #                                     args.exp_name)
-    # args.tfboard_path = os.path.join('./experiments/SMART_PC_N/adapt/scanobject/batch_2_without_augmentation/iter_1/normalize_None__aug_None__all_params_update_True__disable_bn_adaptation_False', Path(args.config).stem, Path(args.config).parent.stem, 'TFBoard',
-    #                                  args.exp_name)                                                                                         
-
-    # args.experiment_path = os.path.join('./experiments/SMART_PC_N_MASK/adapt/modelnet/lr_00001/batch_1_repeat_48_with_rotation_with_mask_40/iter_1/normalize_None__aug_None__all_params_update_True__disable_bn_adaptation_False_Corrected_mean_in_loss', Path(args.config).stem, Path(args.config).parent.stem,
-    #                                     args.exp_name)
-    # args.tfboard_path = os.path.join('./experiments/SMART_PC_N_MASK/adapt/modelnet/lr_00001/batch_1_repeat_48_with_rotation_with_mask_40/iter_1/normalize_None__aug_None__all_params_update_True__disable_bn_adaptation_False_Corrected_mean_in_loss', Path(args.config).stem, Path(args.config).parent.stem, 'TFBoard',
-    #                                  args.exp_name)                         
-
-    # args.experiment_path = os.path.join('./experiments/SMART_PC_N_MASK/adapt/modelnet/batch_1_repeat_48_with_rotation_with_mask_40/iter_1/normalize_None__aug_None__all_params_update_True__disable_bn_adaptation_True_Corrected_mean_in_loss', Path(args.config).stem, Path(args.config).parent.stem,
-    #                                     args.exp_name)
-    # args.tfboard_path = os.path.join('./experiments/SMART_PC_N_MASK/adapt/modelnet /batch_1_repeat_48_with_rotation_with_mask_40/iter_1/normalize_None__aug_None__all_params_update_True__disable_bn_adaptation_True_Corrected_mean_in_loss', Path(args.config).stem, Path(args.config).parent.stem, 'TFBoard',
-    #                                  args.exp_name)       
-
-
-    # args.experiment_path = os.path.join('./experiments/SMART_PC_N/adapt_standard/shapenetcore/batch_1_repeat_48_with_rotation/iter_20/normalize_None__aug_None__all_params_update_True__disable_bn_adaptation_True_Corrected_PART_4', Path(args.config).stem, Path(args.config).parent.stem,
-    #                                     args.exp_name)
-    # args.tfboard_path = os.path.join('./experiments/SMART_PC_N/adapt_standard/shapenetcore/batch_1_repeat_48_with_rotation/iter_20/normalize_None__aug_None__all_params_update_True__disable_bn_adaptation_True_Corrected_PART_4', Path(args.config).stem, Path(args.config).parent.stem, 'TFBoard',
-    #                                  args.exp_name)                                                                                                                            
-
-
-    # args.experiment_path = os.path.join('./experiments/SMART_PC_N_MATE/adapt/modelnet/batch_1_repeat_48/iter_1/normalize_minus_center__aug_None__all_params_update_True__disable_bn_adaptation_False_Corrected', Path(args.config).stem, Path(args.config).parent.stem,
-    #                                     args.exp_name)
-    # args.tfboard_path = os.path.join('./experiments/SMART_PC_N_MATE/adapt/modelnet/batch_1_repeat_48/iter_1/normalize_minus_center__aug_None__all_params_update_True__disable_bn_adaptation_False_Corrected', Path(args.config).stem, Path(args.config).parent.stem, 'TFBoard',
-    #                                  args.exp_name)                                                    
-     
-    # args.experiment_path = os.path.join('./experiments/MATE/adapt_standard/shapenetcore/batch_1/iter_20/normalize_minus_center__aug_None__all_params_update_True__disable_bn_adaptation_True__reg_True_PART_3', Path(args.config).stem, Path(args.config).parent.stem,
-    #                                     args.exp_name)
-    # args.tfboard_path = os.path.join('./experiments/MATE/adapt_standard/shapenetcore/batch_1/iter_20/normalize_minus_center__aug_None__all_params_update_True__disable_bn_adaptation_True__reg_True_PART_3', Path(args.config).stem, Path(args.config).parent.stem, 'TFBoard',
-    #                                  args.exp_name)                                                                                                   
-  
-
-    # args.experiment_path = os.path.join('./experiments/MATE/adapt/scanobject/batch_1_repeat_48/iter_1/normalize_minus_center__aug_None__all_params_update_True__disable_bn_adaptation_False__reg_True_ROUND_2', Path(args.config).stem, Path(args.config).parent.stem,
-    #                                     args.exp_name)   
-    # args.tfboard_path = os.path.join('./experiments/MATE/adapt/scanobject/batch_1_repeat_48/iter_1/normalize_minus_center__aug_None__all_params_update_True__disable_bn_adaptation_False__reg_True_ROUND_2', Path(args.config).stem, Path(args.config).parent.stem, 'TFBoard',
-    #                                  args.exp_name)     
-
-    # args.experiment_path = os.path.join('./experiments/SMART_PC_N/adapt/scanobject/batch_128/iter_1/Source_Only', Path(args.config).stem, Path(args.config).parent.stem,
-    #                                     args.exp_name)
-    # args.tfboard_path = os.path.join('./experiments/SMART_PC_N/adapt/scanobject/batch_128/iter_1/Source_Only', Path(args.config).stem, Path(args.config).parent.stem, 'TFBoard',
-    #                                  args.exp_name)         
-
-    # args.experiment_path = os.path.join('./experiments/SMART_PC_N/adapt/modelnet/batch_1_repeat_48_random_rotate/iter_1/normalize_None__aug_None__only_bn_ln_update_True__disable_bn_adaptation_False', Path(args.config).stem, Path(args.config).parent.stem,
-    #                                     args.exp_name)
-    # args.tfboard_path = os.path.join('./experiments/SMART_PC_N/adapt/modelnet/batch_1_repeat_48_random_rotate/iter_1/normalize_None__aug_None__only_bn_ln_update_True__disable_bn_adaptation_False', Path(args.config).stem, Path(args.config).parent.stem, 'TFBoard',
-    #                                  args.exp_name)    
-
-
-    # args.experiment_path = os.path.join('./experiments/SMART_PC_N_MATE/adapt/shapenetcore/batch_128/iter_1/normalize_minus_center__aug_None__all_params_update_True__disable_bn_adaptation_False', Path(args.config).stem, Path(args.config).parent.stem,
-    #                                     args.exp_name)
-    # args.tfboard_path = os.path.join('./experiments/SMART_PC_N_MATE/adapt/shapenetcore/batch_128/iter_1/normalize_minus_center__aug_None__all_params_update_True__disable_bn_adaptation_False', Path(args.config).stem, Path(args.config).parent.stem, 'TFBoard',
-    #                                  args.exp_name)        
-
-
-    # args.experiment_path = os.path.join('./experiments/alaki/adapt/shapenetcore/batch_128/iter_1/normalize_minus_center__aug_None__all_params_update_True__disable_bn_adaptation_False', Path(args.config).stem, Path(args.config).parent.stem,
-    #                                     args.exp_name)
-    # args.tfboard_path = os.path.join('./experiments/alaki/adapt/shapenetcore/batch_128/iter_1/normalize_minus_center__aug_None__all_params_update_True__disable_bn_adaptation_False', Path(args.config).stem, Path(args.config).parent.stem, 'TFBoard',
-    #                                  args.exp_name)     
-
-    ### normalize_minus_center__aug_None__regularize_True     SMART_PC_N_MATE    batch_1_repeat_48                                   
-
-    ############################################################################################################################3
-
-    # args.experiment_path = os.path.join('./experiments/11_jan/SMART_PC_N_MASK_2/pretrain/scanobject/normalize_minus_center__aug_scale_transform_compute_loss_mean', Path(args.config).stem, Path(args.config).parent.stem,  
-    #                                     args.exp_name)
-    # args.tfboard_path = os.path.join('./experiments/11_jan/SMART_PC_N_MASK_2/pretrain/scanobject/normalize_minus_center__aug_scale_transform_compute_loss_mean', Path(args.config).stem, Path(args.config).parent.stem, 'TFBoard',
-    #                                  args.exp_name)  
-
-    # args.experiment_path = os.path.join('./experiments/11_jan/SMART_PC_N_MASK_2/adapt/shapenetcore/normalize_minus_center__aug_scale_transform_compute', Path(args.config).stem, Path(args.config).parent.stem,  
-    #                                     args.exp_name)
-    # args.tfboard_path = os.path.join('./experiments/11_jan/SMART_PC_N_MASK_2/adapt/shapenetcore/normalize_minus_center__aug_scale_transform_compute', Path(args.config).stem, Path(args.config).parent.stem, 'TFBoard',
-    #                                  args.exp_name)         
-
-    # args.experiment_path = os.path.join('./experiments/11_jan/SMART_PC_N/adapt/shapenetcore/normalize_None__aug_scale_transform_compute_out_layer', Path(args.config).stem, Path(args.config).parent.stem,  
-    #                                     args.exp_name)
-    # args.tfboard_path = os.path.join('./experiments/11_jan/SMART_PC_N/adapt/shapenetcore/normalize_None__aug_scale_transform_compute_out_layer', Path(args.config).stem, Path(args.config).parent.stem, 'TFBoard',
-    #                                  args.exp_name)        
- 
-
-
-    ##############################################################################################################################
-
-    # args.experiment_path = os.path.join('./experiments/16_Jan/SMART_PC_N/adapt/shapenetcore/batch_1_repeat_48_with_rotation/iter_1/normalize_None__aug_None__disable_bn_adaptation_False', Path(args.config).stem, Path(args.config).parent.stem,
-    #                                     args.exp_name)
-    # args.tfboard_path = os.path.join('./experiments/16_Jan/SMART_PC_N/adapt/shapenetcore/batch_1_repeat_48_with_rotation/iter_1/normalize_None__aug_None__disable_bn_adaptation_False', Path(args.config).stem, Path(args.config).parent.stem, 'TFBoard',
-    #                                  args.exp_name)    
-
-    # args.experiment_path = os.path.join('./experiments/SMART_PC_N/Ablation/modelnet/batch/128_standard_update_all_params', Path(args.config).stem, Path(args.config).parent.stem,
-    #                                     args.exp_name)
-    # args.tfboard_path = os.path.join('./experiments/SMART_PC_N/Ablation/modelnet/batch/128_standard_update_all_params', Path(args.config).stem, Path(args.config).parent.stem, 'TFBoard',
-    #                                  args.exp_name)       
-
-
-    # args.experiment_path = os.path.join('./experiments/SMART_PC_N/Ablation/modelnet/without_repeat/1_online_update_all_params', Path(args.config).stem, Path(args.config).parent.stem,
-    #                                     args.exp_name)
-    # args.tfboard_path = os.path.join('./experiments/SMART_PC_N/Ablation/modelnet/without_repeat/1_online_update_all_params', Path(args.config).stem, Path(args.config).parent.stem, 'TFBoard',
-    #                                  args.exp_name)   
-
-    # args.experiment_path = os.path.join('./experiments/SMART_PC_N/Ablation/scanobject/iteration_5/SMART_PC_standard', Path(args.config).stem, Path(args.config).parent.stem,
-    #                                     args.exp_name)
-    # args.tfboard_path = os.path.join('./experiments/SMART_PC_N/Ablation/scanobject/iteration_5/SMART_PC_standard', Path(args.config).stem, Path(args.config).parent.stem, 'TFBoard',
-    #                                  args.exp_name)             
-
-    # args.experiment_path = os.path.join('./experiments/SMART_PC_N/Ablation/ICML/ADAPTATION_modelnet_pretrain_w1_1__w2_1_sampling_1', Path(args.config).stem, Path(args.config).parent.stem,
-    #                                     args.exp_name)
-    # args.tfboard_path = os.path.join('./experiments/SMART_PC_N/Ablation/ICML/ADAPTATION_modelnet_pretrain_w1_1__w2_1_sampling_1', Path(args.config).stem, Path(args.config).parent.stem, 'TFBoard',
-    #                                  args.exp_name)  
-        
-    # args.experiment_path = os.path.join('./experiments/SMART_PC_P/pretrain/after_ICML_sumission/scale_transform_aug_without_add', Path(args.config).stem, Path(args.config).parent.stem,
-    #                                     args.exp_name)
-    # args.tfboard_path = os.path.join('./experiments/SMART_PC_P/pretrain/after_ICML_sumission/scale_transform_aug_without_add', Path(args.config).stem, Path(args.config).parent.stem, 'TFBoard',
-    #                                  args.exp_name)  
-    
-    # args.experiment_path = os.path.join('./experiments/SMART_PC_P/adapt/after_ICML_sumission/scale_transform_aug_without_add/online', Path(args.config).stem, Path(args.config).parent.stem,
-    #                                     args.exp_name)
-    # args.tfboard_path = os.path.join('./experiments/SMART_PC_P/adapt/after_ICML_sumission/scale_transform_aug_without_add/online', Path(args.config).stem, Path(args.config).parent.stem, 'TFBoard',
-    #                                  args.exp_name)  
-
-
-
-    # args.experiment_path = os.path.join('./experiments/SMART_PC_N/Christian', Path(args.config).stem, Path(args.config).parent.stem,
-    #                                     args.exp_name)
-    # args.tfboard_path = os.path.join('./experiments/SMART_PC_N/Christian', Path(args.config).stem, Path(args.config).parent.stem, 'TFBoard',
-    #                                  args.exp_name) 
-
-
-    args.experiment_path = os.path.join('./experiments/SMART_PC_N/Christian/adaptation/online', Path(args.config).stem, Path(args.config).parent.stem,
+    args.experiment_path = os.path.join('./experiments', Path(args.config).stem, Path(args.config).parent.stem,
                                         args.exp_name)
-    args.tfboard_path = os.path.join('./experiments/SMART_PC_N/Christian/adaptation/online', Path(args.config).stem, Path(args.config).parent.stem, 'TFBoard',
-                                     args.exp_name) 
+    args.tfboard_path = os.path.join('./experiments', Path(args.config).stem, Path(args.config).parent.stem, 'TFBoard',
+                                     args.exp_name)
 
     args.log_name = Path(args.config).stem                                                                      
     create_experiment_dir(args)

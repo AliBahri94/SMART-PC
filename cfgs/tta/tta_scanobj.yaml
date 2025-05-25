@@ -40,8 +40,8 @@ model : {
     dataset: "scanobject",   
 
     ########## settings                                
-    method: "SMART_PC_P",                                                # SMART_PC_N , MATE , SMART_PC_N_MASK                       
-    normalize: "minus_center",                                                  # minus_center                         
+    method: "SMART_PC_N",                                                # SMART_PC_N , MATE , SMART_PC_P                            
+    normalize: "None",                                           # None, minus_center                            
     only_bn_update: False,   
     only_bn_ln_update: False,  
     all_params_update: True,   
@@ -56,13 +56,12 @@ model : {
     batch_size_tta: 48,           
     batch_size_adapt: 1,                                                                 
     iteration: 1,      
-    mask_input: False,        
     time_cal: False,   
     mean_loss: False,          
     outlayer_removal: False,             
     alg_update: "None", 
     scale_aug: False, 
-    freez_decoder: True,
+    freez_decoder: False,
 
     #### visualization
     visualization: False,

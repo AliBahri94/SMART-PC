@@ -15,18 +15,6 @@ from datasets import data_transforms
 from torch.utils.data import DataLoader
 from pointnet2_ops import pointnet2_utils
 
-# train_transforms = transforms.Compose(
-#     [
-#         # data_transforms.PointcloudScale(),
-#         # data_transforms.PointcloudRotate(),
-#         # # data_transforms.PointcloudRotatePerturbation(),
-#         # data_transforms.RandomHorizontalFlip(),
-#         # data_transforms.PointcloudTranslate(),
-#         # data_transforms.PointcloudJitter(),
-#         # data_transforms.PointcloudRandomInputDropout(),
-#         data_transforms.PointcloudScaleAndTranslate(),
-#     ]
-# )
 
 
 train_transforms = transforms.Compose(
@@ -100,7 +88,6 @@ def run_net(args, config, train_writer=None, val_writer=None):
         raise NotImplementedError
 
     method = config.model.transformer_config.method
-    pretrain_weights_MATE = config.model.transformer_config.pretrain_weights_MATE
 
     if not args.partnet_cls:
         config.model.group_norm = args.group_norm
@@ -136,9 +123,6 @@ def run_net(args, config, train_writer=None, val_writer=None):
             builder.load_model(base_model, args.start_ckpts, logger=logger)
 
 
-        # if (pretrain_weights_MATE):
-        #     base_model = load_base_model(args, config, logger)
-
         # DDP
         if args.distributed:
             # Sync BN
@@ -170,10 +154,8 @@ def run_net(args, config, train_writer=None, val_writer=None):
             batch_start_time = time.time()
             batch_time = AverageMeter()
             data_time = AverageMeter()
-            if (method != "SMART_PC_N_MATE"):
-                losses = AverageMeter(['Loss', 'Reconstruction Loss', 'Classification Loss'])
-            else:
-                losses = AverageMeter(['Loss', 'Reconstruction Loss', 'Skeleton Loss', 'Classification Loss'])
+            losses = AverageMeter(['Loss', 'Reconstruction Loss', 'Classification Loss'])
+    
 
             num_iter = 0
 
@@ -221,10 +203,8 @@ def run_net(args, config, train_writer=None, val_writer=None):
                                                                     only_unmasked=args.only_unmasked)  # todo new flag for 100% or 10% tokens for classification (for ablation study)
 
                     else:  # joint  training
-                        if (method != "SMART_PC_N_MATE"):
-                            rec_loss, ret, _ = base_model(points)   
-                        else:
-                            skl_loss, rec_loss, ret, _ = base_model(points)   
+                        rec_loss, ret, _ = base_model(points)   
+                        
 
                 else:
                     rec_loss, ret = base_model(points,
@@ -234,25 +214,17 @@ def run_net(args, config, train_writer=None, val_writer=None):
                     rec_loss = rec_loss[0]   
 
                 class_loss, acc = base_model.module.get_loss_acc(ret, label)
-                if (method != "SMART_PC_N_MATE"):
-                    loss = class_loss + rec_loss  
-                else:
-                    loss = class_loss + rec_loss + skl_loss
+                loss = class_loss + rec_loss  
+                
                         
                 try:
                     loss.backward()
                 except:
-                    if (method != "SMART_PC_N_MATE"):
-                        loss = loss.mean()
-                        rec_loss = rec_loss.mean()
-                        class_loss = class_loss.mean()
-                        loss.backward()
-                    else:
-                        loss = loss.mean()
-                        rec_loss = rec_loss.mean()
-                        class_loss = class_loss.mean()
-                        skl_loss = skl_loss.mean()
-                        loss.backward()
+                    loss = loss.mean()
+                    rec_loss = rec_loss.mean()
+                    class_loss = class_loss.mean()
+                    loss.backward()
+
                 # forward
                 if num_iter == config.step_per_update:
                     num_iter = 0
@@ -261,16 +233,10 @@ def run_net(args, config, train_writer=None, val_writer=None):
 
                 if args.distributed:
                     loss = dist_utils.reduce_tensor(loss, args)
-                    if (method != "SMART_PC_N_MATE"):
-                        losses.update([loss.item() * 1000, rec_loss.item() * 1000, class_loss.item() * 1000])
-                    else:
-                        losses.update([loss.item() * 1000, rec_loss.item() * 1000, skl_loss.item() * 1000, class_loss.item() * 1000])
-
+                    losses.update([loss.item() * 1000, rec_loss.item() * 1000, class_loss.item() * 1000])
+                
                 else:
-                    if (method != "SMART_PC_N_MATE"):
-                        losses.update([loss.item() * 1000, rec_loss.item() * 1000, class_loss.item() * 1000])
-                    else:
-                        losses.update([loss.item() * 1000, rec_loss.item() * 1000, skl_loss.item() * 1000, class_loss.item() * 1000])
+                    losses.update([loss.item() * 1000, rec_loss.item() * 1000, class_loss.item() * 1000])
 
 
                 if args.distributed:
@@ -280,8 +246,6 @@ def run_net(args, config, train_writer=None, val_writer=None):
                     train_writer.add_scalar('Loss/Batch/Loss', loss.item(), n_itr)
                     train_writer.add_scalar('Loss/Batch/RecLoss', rec_loss.item(), n_itr)
                     train_writer.add_scalar('Loss/Batch/ClassLoss', class_loss.item(), n_itr)
-                    if (method == "SMART_PC_N_MATE"):
-                        train_writer.add_scalar('Loss/Batch/SklLoss', skl_loss.item(), n_itr)
                     train_writer.add_scalar('Loss/Batch/TrainAcc', acc.item(), n_itr)
                     train_writer.add_scalar('Loss/Batch/LR', optimizer.param_groups[0]['lr'], n_itr)
 
@@ -854,15 +818,10 @@ def validate(base_model, extra_train_dataloader, test_dataloader, epoch, val_wri
 
                 assert points.size(1) == npoints
 
-                # if args.train_aug:
-                # points = train_transforms(points)
-
-                if (method == "MATE" or method == "SMART_PC_N_MATE" or method == "SMART_PC_N_MASK_2"):   
+                if (method == "MATE"):   
                     ret = base_model.module.classification_only(points, only_unmasked=False)
                 # elif (method == "SMART_PC_N" or method == "SMART_PC_P"):    
                 elif (method == "SMART_PC_N"):    
-                    # points = torch.load("/export/livia/home/vision/Abahri/projects/SMART_PC/smart_pc/data_points_shapenet.pth").cuda() 
-                    # label = torch.load("/export/livia/home/vision/Abahri/projects/SMART_PC/smart_pc/labels_shapenet.pth").cuda()
                     ret = base_model.module.classification_SMART(points, only_unmasked=False)     
 
                 elif (method == "SMART_PC_P"):    

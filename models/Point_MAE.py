@@ -795,19 +795,16 @@ class Point_MAE(nn.Module):
         self.dataset = config.transformer_config.dataset
         self.normalize = config.transformer_config.normalize 
         self.repeat_data_SMART_PC = config.transformer_config.repeat_data_SMART_PC   
-        self.mask_input = config.transformer_config.mask_input        
         self.mean_loss = config.transformer_config.mean_loss        
         self.alg_update = config.transformer_config.alg_update
         
 
-        if (self.method == "MATE" or self.method == "SMART_PC_N_MATE" or self.method == "SMART_PC_N_MASK_2"): 
+        if (self.method == "MATE"): 
                 self.MAE_encoder = MaskTransformer(config)
 
-        elif (self.method == "SMART_PC_N" or self.method == "SMART_PC_P" or self.method == "SMART_PC_N_MASK"): 
-            if (self.mask_input):
-                self.MAE_encoder = MaskTransformer_SMART_WITH_MASK(config)
-            else:    
-                self.MAE_encoder = MaskTransformer_SMART(config)
+        elif (self.method == "SMART_PC_N" or self.method == "SMART_PC_P"): 
+            
+            self.MAE_encoder = MaskTransformer_SMART(config)
 
         self.group_size = config.group_size
         self.num_group = config.num_group
@@ -842,10 +839,10 @@ class Point_MAE(nn.Module):
             class_blocks.extend((nn.Linear(last_dim, 256), norm_layer, nn.ReLU(inplace=True), nn.Dropout(0.5)))
             last_dim = 256
 
-        if (self.method == "MATE" or self.method == "SMART_PC_N_MATE" or self.method == "SMART_PC_N_MASK_2" and self.dataset == "shapenetcore"):    
+        if (self.method == "MATE" and self.dataset == "shapenetcore"):    
             self.class_head = nn.Sequential(*class_blocks, nn.Linear(last_dim, self.cls_dim))
 
-        elif (self.method == "MATE" or self.method == "SMART_PC_N_MATE" or self.method == "SMART_PC_N_MASK_2" and self.dataset == "scanobject"):    
+        elif (self.method == "MATE" and self.dataset == "scanobject"):    
             last_layer = nn.Linear(last_dim, self.cls_dim)                                                   
     
             self.class_head = nn.Sequential(    
@@ -884,7 +881,7 @@ class Point_MAE(nn.Module):
                 self.group_divider = Group_4(num_group=self.num_group, group_size=self.group_size)
 
 
-        if (self.method == "SMART_PC_N" or self.method == "SMART_PC_P" or self.method == "SMART_PC_N_MASK" or self.method == "SMART_PC_N_MASK_2"):
+        if (self.method == "SMART_PC_N" or self.method == "SMART_PC_P"):
             # prediction head
             self.increase_dim = nn.Sequential(
                 # nn.Conv1d(self.trans_dim, 1024, 1),
@@ -907,20 +904,6 @@ class Point_MAE(nn.Module):
                 # nn.Conv1d(self.trans_dim, 1024, 1),  
                 # nn.BatchNorm1d(1024),
                 # nn.LeakyReLU(negative_slope=0.2),
-                nn.Conv1d(self.trans_dim, 3 * self.group_size, 1)
-            )
-
-        elif (self.method == "SMART_PC_N_MATE"):
-            # prediction head
-            self.increase_dim = nn.Sequential(
-                nn.Conv1d(self.trans_dim, 3, 1)    
-            )
-
-            self.increase_dim_2 = nn.Sequential(
-                nn.Conv1d(self.trans_dim, 1, 1)
-            )    
-
-            self.increase_dim_rec = nn.Sequential(
                 nn.Conv1d(self.trans_dim, 3 * self.group_size, 1)
             )
 
@@ -1182,80 +1165,6 @@ class Point_MAE(nn.Module):
             else:
                 return loss1, class_ret, regularization_loss
 
-        if (self.method == "SMART_PC_N_MASK_2"):
-            neighborhood, center = self.group_divider(pts)
-
-            x_vis_w_token, mask, _, _ = self.MAE_encoder(neighborhood, center)   
-            x_vis = x_vis_w_token[:, 1:]
-            B, _, C = x_vis.shape  # B VIS C
-            pos_emd_vis = self.decoder_pos_embed(center[~mask]).reshape(B, -1, C)
-            pos_emd_mask = self.decoder_pos_embed(center[mask]).reshape(B, -1, C)
-
-            _, N, _ = pos_emd_mask.shape
-            mask_token = self.mask_token.expand(B, N, -1)
-            x_full = torch.cat([x_vis, mask_token], dim=1)
-            pos_full = torch.cat([pos_emd_vis, pos_emd_mask], dim=1)
-
-            x_rec = self.MAE_decoder(x_full, pos_full, N)
-
-            B, M, C = x_rec.shape
-            skel_xyz = self.increase_dim(x_rec.transpose(1, 2)).transpose(1, 2).reshape(B, M, 3)  # B M 1024
-            skel_radius = self.increase_dim_2(x_rec.transpose(1, 2)).transpose(1, 2).reshape(B, M)  # B M 1024
-
-            if not cyclic:
-                feat = torch.cat([x_vis_w_token[:, 0], x_vis_w_token.max(1)[0]], dim=-1)    
-                class_ret = self.class_head(feat)     
-
-  
-            neighborhood = neighborhood.reshape(B, -1, 3)                 
-            if (self.mean_loss):    
-                loss1 = self.compute_loss_mean(neighborhood, skel_xyz, skel_radius[..., None], None, 0.3, 0.4)
-            else:    
-                loss1 = self.compute_loss(neighborhood, skel_xyz, skel_radius[..., None], None, 0.3, 0.4)
-
-            if self.regularize:
-                vis_points = neighborhood[~mask].reshape(B * (self.num_group - M), -1, 3)
-
-                full_vis = vis_points + center[~mask].unsqueeze(1)
-                full_rebuild = rebuild_points + center[mask].unsqueeze(1)
-                full = torch.cat([full_vis, full_rebuild], dim=0).reshape(B, self.num_group, 32, 3)
-
-                mean_rebuild = torch.mean(full, dim=0)
-
-                regularization_loss = torch.tensor(0, dtype=torch.float).cuda()
-
-                for bs in range((full.shape[0])):
-                    regularization_loss += self.loss_func(full[bs, :, :, :].squeeze(), mean_rebuild)[0]      
-                regularization_loss = regularization_loss / full.shape[0]
-
-                mean_class_ret = class_ret.mean(dim=0)
-                ce_pred_consitency = torch.tensor(0, dtype=torch.float).cuda()
-
-                for bs in range((class_ret.shape[0])):
-                    ce_pred_consitency += self.l1_consistency_loss(class_ret[bs, :].squeeze(), mean_class_ret.squeeze())
-                class_ret = ce_pred_consitency / class_ret.shape[0]
-
-            else:
-                regularization_loss = torch.tensor(0, dtype=torch.float).cuda()
-                class_ret = class_ret 
-
-            # print(self.loss_func)  
-            # vis = True
-            if vis:
-                vis_points = neighborhood[~mask].reshape(B * (self.num_group - M), -1, 3)
-                full_vis = vis_points + center[~mask].unsqueeze(1)
-                full_rebuild = rebuild_points + center[mask].unsqueeze(1)
-                full = torch.cat([full_vis, full_rebuild], dim=0)
-                # full_points = torch.cat([rebuild_points,vis_points], dim=0)
-                full_center = torch.cat([center[mask], center[~mask]], dim=0)
-                # full = full_points + full_center.unsqueeze(1)
-                ret2 = full_vis.reshape(-1, 3).unsqueeze(0)
-                ret1 = full.reshape(-1, 3).unsqueeze(0)
-                # return ret1, ret2
-                return ret1, ret2, full_center
-            else:
-                return loss1, class_ret, regularization_loss
-
         elif (self.method == "SMART_PC_N"):    
             neighborhood, center = self.group_divider(pts)    
   
@@ -1276,11 +1185,6 @@ class Point_MAE(nn.Module):
             skel_xyz = self.increase_dim(x_rec.transpose(1, 2)).transpose(1, 2).reshape(B, M, 3)  # B M 1024  
             skel_radius = self.increase_dim_2(x_rec.transpose(1, 2)).transpose(1, 2).reshape(B, M)  # B M 1024
 
-
-            # torch.save(skel_xyz, f"./Figures/new2/source_guitar/source_skel_xyz_{idx}.pth")
-            # torch.save(skel_radius, f"./Figures/new2/source_guitar/source_skel_radius_{idx}.pth")
-            # torch.save(neighborhood.reshape(B, -1, 3), f"./Figures/new2/source_guitar/source_neighborhood_{idx}.pth")
-
             if not cyclic:
                 guid = x_rec + x_vis_w_token[:, 1:]
                 feat = torch.cat([x_vis_w_token[:, 0], guid.max(1)[0]], dim=-1)    
@@ -1292,11 +1196,7 @@ class Point_MAE(nn.Module):
                 if (self.alg_update == "tent"):
                     loss1 = self.softmax_entropy(class_ret).mean(0)          
                 else:    
-                    loss1 = self.compute_loss_mean(neighborhood, skel_xyz, skel_radius[..., None], None, 0.3, 0.4)       
-                    # loss1 = self.compute_loss_mean(neighborhood, skel_xyz, skel_radius[..., None], None, 0., 1.0)             
-                    # loss1 = self.compute_loss_mean(neighborhood, skel_xyz, skel_radius[..., None], None, 1., 0.)            
-                    # loss1 = self.compute_loss_mean(neighborhood, skel_xyz, skel_radius[..., None], None, 1., 1.)            
-                    # pass
+                    loss1 = self.compute_loss_mean(neighborhood, skel_xyz, skel_radius[..., None], None, 0.3, 0.4)              
             else:    
                 if (self.alg_update == "tent"):
                     loss1 = self.softmax_entropy(class_ret).mean(0)
@@ -1343,8 +1243,6 @@ class Point_MAE(nn.Module):
                 # return ret1, ret2
                 return ret1, ret2, full_center
             else:
-                # loss1 = torch.tensor([0]).cuda()
-            #     regularization_loss = torch.tensor(0, dtype=torch.float).cuda()          
                 return loss1, class_ret, regularization_loss    
 
         elif (self.method == "SMART_PC_P"):    
@@ -1417,159 +1315,8 @@ class Point_MAE(nn.Module):
             else:
                 return loss1, class_ret, regularization_loss  
 
-        elif (self.method == "SMART_PC_N_MATE"):
-            neighborhood, center = self.group_divider(pts)
-
-            x_vis_w_token, mask, _, _ = self.MAE_encoder(neighborhood, center)
-            x_vis = x_vis_w_token[:, 1:]
-            B, _, C = x_vis.shape  # B VIS C
-            pos_emd_vis = self.decoder_pos_embed(center[~mask]).reshape(B, -1, C)
-            pos_emd_mask = self.decoder_pos_embed(center[mask]).reshape(B, -1, C)
-
-            _, N, _ = pos_emd_mask.shape
-            mask_token = self.mask_token.expand(B, N, -1)
-            x_full = torch.cat([x_vis, mask_token], dim=1)
-            pos_full = torch.cat([pos_emd_vis, pos_emd_mask], dim=1)
-
-            x_rec = self.MAE_decoder(x_full, pos_full, N)
-
-            B, M, C = x_rec.shape
-            skel_xyz = self.increase_dim(x_rec.transpose(1, 2)).transpose(1, 2).reshape(B, M, 3)  # B M 1024
-            skel_radius = self.increase_dim_2(x_rec.transpose(1, 2)).transpose(1, 2).reshape(B, M)  # B M 1024
-
-            if not cyclic:
-                # guid = x_rec + x_vis_w_token[:, 1:]
-                feat = torch.cat([x_vis_w_token[:, 0], x_vis_w_token.max(1)[0]], dim=-1)  
-                class_ret = self.class_head(feat)     
-
-            rebuild_points = self.increase_dim_rec(x_rec.transpose(1, 2)).transpose(1, 2).reshape(B * M, -1, 3)  # B M 1024
-            # if self.MAE_encoder.mask_ratio == 0:
-            #     gt_points = neighborhood.reshape(B * M, -1, 3)
-            # else:
-            gt_points = neighborhood[mask].reshape(B * M, -1, 3)
-
-            loss1 = self.loss_func(rebuild_points, gt_points)[0]     
-
-            neighborhood = neighborhood.reshape(B, -1, 3)      
-            loss_skl = self.compute_loss(neighborhood, skel_xyz, skel_radius[..., None], None, 0.3, 0.4)
-
-            if self.regularize:
-                vis_points = neighborhood[~mask].reshape(B * (self.num_group - M), -1, 3)
-
-                full_vis = vis_points + center[~mask].unsqueeze(1)
-                full_rebuild = rebuild_points + center[mask].unsqueeze(1)
-                full = torch.cat([full_vis, full_rebuild], dim=0).reshape(B, self.num_group, 32, 3)
-
-                mean_rebuild = torch.mean(full, dim=0)
-
-                regularization_loss = torch.tensor(0, dtype=torch.float).cuda()
-
-                for bs in range((full.shape[0])):
-                    regularization_loss += self.loss_func(full[bs, :, :, :].squeeze(), mean_rebuild)[0]      
-                regularization_loss = regularization_loss / full.shape[0]
-
-                mean_class_ret = class_ret.mean(dim=0)
-                ce_pred_consitency = torch.tensor(0, dtype=torch.float).cuda()
-
-                for bs in range((class_ret.shape[0])):
-                    ce_pred_consitency += self.l1_consistency_loss(class_ret[bs, :].squeeze(), mean_class_ret.squeeze())
-                class_ret = ce_pred_consitency / class_ret.shape[0]
-
-            else:
-                regularization_loss = torch.tensor(0, dtype=torch.float).cuda()
-                class_ret = class_ret
-
-            # print(self.loss_func)  
-            # vis = True
-            if vis:
-                vis_points = neighborhood[~mask].reshape(B * (self.num_group - M), -1, 3)
-                full_vis = vis_points + center[~mask].unsqueeze(1)
-                full_rebuild = rebuild_points + center[mask].unsqueeze(1)
-                full = torch.cat([full_vis, full_rebuild], dim=0)
-                # full_points = torch.cat([rebuild_points,vis_points], dim=0)
-                full_center = torch.cat([center[mask], center[~mask]], dim=0)
-                # full = full_points + full_center.unsqueeze(1)
-                ret2 = full_vis.reshape(-1, 3).unsqueeze(0)
-                ret1 = full.reshape(-1, 3).unsqueeze(0)
-                # return ret1, ret2
-                return ret1, ret2, full_center
-            else:
-                return loss_skl, loss1, class_ret, regularization_loss
-
-        elif (self.method == "SMART_PC_N_MASK"):    
-            neighborhood, center = self.group_divider(pts)    
-  
-            x_vis_w_token, mask_r, _, _ = self.MAE_encoder(neighborhood, center)
-            x_vis = x_vis_w_token[:, 1:]
-            B, _, C = x_vis.shape  # B VIS C
-            pos_emd_vis = self.decoder_pos_embed(center[~mask_r]).reshape(B, -1, C)
-            mask = torch.zeros(center.shape[:2]).bool()
-            pos_emd_mask = self.decoder_pos_embed(center[mask]).reshape(B, -1, C)
-
-            _, N, _ = pos_emd_mask.shape
-            mask_token = self.mask_token.expand(B, N, -1)
-            x_full = torch.cat([x_vis, mask_token], dim=1)
-            pos_full = torch.cat([pos_emd_vis, pos_emd_mask], dim=1)
-
-            x_rec = self.MAE_decoder(x_full, pos_full, N)     
-
-            B, M, C = x_rec.shape
-            skel_xyz = self.increase_dim(x_rec.transpose(1, 2)).transpose(1, 2).reshape(B, M, 3)  # B M 1024
-            skel_radius = self.increase_dim_2(x_rec.transpose(1, 2)).transpose(1, 2).reshape(B, M)  # B M 1024
-
-            if not cyclic:
-                guid = x_rec + x_vis_w_token[:, 1:]
-                feat = torch.cat([x_vis_w_token[:, 0], guid.max(1)[0]], dim=-1)  
-                class_ret = self.class_head(feat)     
-
-  
-            neighborhood = neighborhood[~mask_r]        
-            neighborhood = neighborhood.reshape(B, -1, 3)               
-            # loss1 = self.compute_loss(neighborhood, skel_xyz, skel_radius[..., None], None, 0.3, 0.4)    
-            loss1 = self.compute_loss_mean(neighborhood, skel_xyz, skel_radius[..., None], None, 0.3, 0.4)  
 
 
-            if self.regularize:
-                vis_points = neighborhood[~mask].reshape(B * (self.num_group - M), -1, 3)
-
-                full_vis = vis_points + center[~mask].unsqueeze(1)
-                full_rebuild = rebuild_points + center[mask].unsqueeze(1)
-                full = torch.cat([full_vis, full_rebuild], dim=0).reshape(B, self.num_group, 32, 3)
-
-                mean_rebuild = torch.mean(full, dim=0)
-
-                regularization_loss = torch.tensor(0, dtype=torch.float).cuda()
-
-                for bs in range((full.shape[0])):
-                    regularization_loss += self.loss_func(full[bs, :, :, :].squeeze(), mean_rebuild)
-                regularization_loss = regularization_loss / full.shape[0]
-
-                mean_class_ret = class_ret.mean(dim=0)
-                ce_pred_consitency = torch.tensor(0, dtype=torch.float).cuda()
-
-                for bs in range((class_ret.shape[0])):
-                    ce_pred_consitency += self.l1_consistency_loss(class_ret[bs, :].squeeze(), mean_class_ret.squeeze())
-                class_ret = ce_pred_consitency / class_ret.shape[0]
-
-            else:
-                regularization_loss = torch.tensor(0, dtype=torch.float).cuda()
-                class_ret = class_ret
-
-
-            if vis:
-                vis_points = neighborhood[~mask].reshape(B * (self.num_group - M), -1, 3)    
-                full_vis = vis_points + center[~mask].unsqueeze(1)
-                full_rebuild = rebuild_points + center[mask].unsqueeze(1)
-                full = torch.cat([full_vis, full_rebuild], dim=0)
-                # full_points = torch.cat([rebuild_points,vis_points], dim=0)
-                full_center = torch.cat([center[mask], center[~mask]], dim=0)
-                # full = full_points + full_center.unsqueeze(1)
-                ret2 = full_vis.reshape(-1, 3).unsqueeze(0)
-                ret1 = full.reshape(-1, 3).unsqueeze(0)
-                # return ret1, ret2
-                return ret1, ret2, full_center
-            else:
-                return loss1, class_ret, regularization_loss  
             
             
 # todo pointmae model for joint-training of RotNet (sun et al. TTT)

@@ -2,7 +2,6 @@ optimizer : {
   type: AdamW,
   kwargs: {
   lr : 0.00005,          
-  # lr : 0.00001,        
   weight_decay : 0.05
 }}
 
@@ -28,7 +27,6 @@ model : {
 
   transformer_config: {  
     mask_ratio: 0.9,
-    # mask_ratio: 0.4,                
     mask_type: 'rand',
     trans_dim: 384,
     encoder_dims: 384,
@@ -41,8 +39,8 @@ model : {
 
 
     ########## settings                                
-    method: "SMART_PC_N",                                               # SMART_PC_N , MATE , SMART_PC_N_MASK                       
-    normalize: "None",                                                  # minus_center                        
+    method: "SMART_PC_N",                                               # SMART_PC_N , MATE , SMART_PC_P                       
+    normalize: "None",                                                  # None, minus_center                        
     only_bn_update: False,  
     only_bn_ln_update: False,  
     all_params_update: True,   
@@ -53,10 +51,8 @@ model : {
     batch_size_tta: 48,  
     batch_size_adapt: 1,                                                               
     iteration: 1,      
-    mask_input: False,                
     time_cal: False,   
-    mean_loss: False,             
-    outlayer_removal: False,            
+    mean_loss: True,             
     alg_update: "None", 
     scale_aug: False, 
     repeat_data_with_jitter_SMART_PC: False,   

@@ -56,19 +56,6 @@ train_transforms_random_trans = transforms.Compose(
     ]
 )
 
-# train_transforms = transforms.Compose(
-#     [
-#         # data_transforms.PointcloudScale(),
-#         # data_transforms.PointcloudRotate(),
-#         # # data_transforms.PointcloudRotatePerturbation(),
-#         # data_transforms.RandomHorizontalFlip(),
-#         # data_transforms.PointcloudTranslate(),
-#         # data_transforms.PointcloudJitter(),
-#         # data_transforms.PointcloudRandomInputDropout(),
-#         data_transforms.PointcloudScaleAndTranslate(),
-#     ]
-# )
-
 
 def load_tta_dataset(args, config):
     # we have 3 choices - every tta_loader returns only point and labels
@@ -196,11 +183,9 @@ def eval_source(args, config):
 
                     points = points.cuda()
                     labels = label.cuda()
-                    if (method == "MATE" or method == "SMART_PC_N_MATE" or method == "SMART_PC_N_MASK_2"):   
+                    if (method == "MATE"):   
                         logits = base_model.module.classification_only(points, only_unmasked=False)
-                    elif (method == "SMART_PC_P" or method == "SMART_PC_N" or method == "SMART_PC_N_MASK"):  
-                        # points = torch.load("/export/livia/home/vision/Abahri/projects/SMART_PC/smart_pc/Figures/TSNE/data_points_background_modelnet.pth").cuda() 
-                        # labels = torch.load("/export/livia/home/vision/Abahri/projects/SMART_PC/smart_pc/Figures/TSNE/labels_background_modelnet.pth").cuda()
+                    elif (method == "SMART_PC_P" or method == "SMART_PC_N"):  
                         logits = base_model.module.classification_SMART(points, only_unmasked=False)      
 
                     target = labels.view(-1)
@@ -902,48 +887,40 @@ def tta(args, config, train_writer=None):
                             if (scale_aug):
                                 points = random_scale_one_axis(points, 0.5, 2.5)            
 
-                        if (method != "SMART_PC_N_MATE"):    
-                            if (time_cal):
-                                time_list = []
-                                for i_time in range (20): 
-                                    start_time = time.time()
-                                    loss_recon, loss_p_consistency, loss_regularize = base_model(points)    
-                                    loss = loss_recon + (args.alpha * loss_regularize)  # + (0.0001 * loss_p_consistency)
-                                    # loss = loss.mean()
-                                    # loss.backward()
-                                    # optimizer.step()
-                                    # base_model.zero_grad()
-                                    # optimizer.zero_grad()  
-                                    end_time = time.time()
-
-                                    time_list.append(end_time - start_time)
-
-                                print("total time: ", np.mean(time_list))    
-                            else:
-                                start_time = time.time()   
-                                loss_recon, loss_p_consistency, loss_regularize = base_model(points)   
-                                end_time = time.time()   
-                                time_list.append(end_time - start_time)   
+                        if (time_cal):
+                            time_list = []
+                            for i_time in range (20): 
+                                start_time = time.time()
+                                loss_recon, loss_p_consistency, loss_regularize = base_model(points)    
                                 loss = loss_recon + (args.alpha * loss_regularize)  # + (0.0001 * loss_p_consistency)
-                                # loss = torch.min(loss_recon, torch.tensor(0.07).cuda()) + (args.alpha * loss_regularize)  # + (0.0001 * loss_p_consistency)
-                                loss = loss.mean()
-                                if (without_backpropagation == False):       
-                                    loss.backward()   
-                                    optimizer.step()
-                                    base_model.zero_grad()            
-                                    optimizer.zero_grad()  
+                                # loss = loss.mean()
+                                # loss.backward()
+                                # optimizer.step()
+                                # base_model.zero_grad()
+                                # optimizer.zero_grad()  
+                                end_time = time.time()
 
-                                # end_time = time.time()   
-                                # time_list.append(end_time - start_time)               
+                                time_list.append(end_time - start_time)
 
+                            print("total time: ", np.mean(time_list))    
                         else:
-                            loss_skl, loss_recon, loss_p_consistency, loss_regularize = base_model(points)    
-                            loss = loss_recon + (args.alpha * loss_regularize) + loss_skl # + (0.0001 * loss_p_consistency)
+                            start_time = time.time()   
+                            loss_recon, loss_p_consistency, loss_regularize = base_model(points)   
+                            end_time = time.time()   
+                            time_list.append(end_time - start_time)   
+                            loss = loss_recon + (args.alpha * loss_regularize)  # + (0.0001 * loss_p_consistency)
+                            # loss = torch.min(loss_recon, torch.tensor(0.07).cuda()) + (args.alpha * loss_regularize)  # + (0.0001 * loss_p_consistency)
                             loss = loss.mean()
-                            loss.backward()
-                            optimizer.step()
-                            base_model.zero_grad()
-                            optimizer.zero_grad()  
+                            if (without_backpropagation == False):       
+                                loss.backward()   
+                                optimizer.step()
+                                base_model.zero_grad()            
+                                optimizer.zero_grad()  
+
+                            # end_time = time.time()   
+                            # time_list.append(end_time - start_time)               
+
+
                     else:
                         continue
 
@@ -981,13 +958,11 @@ def tta(args, config, train_writer=None):
                 labels = labels.cuda()
                 points = misc.fps(points, npoints)   
 
-                if (method == "MATE" or method == "SMART_PC_N_MATE" or method == "SMART_PC_N_MASK_2"):   
+                if (method == "MATE"):   
                     logits = base_model.module.classification_only(points, only_unmasked=False)
 
-                # elif (method == "SMART_PC_N" or method == "SMART_PC_P" or method == "SMART_PC_N_MASK"):    
-                elif (method == "SMART_PC_N" or method == "SMART_PC_N_MASK"):    
+                elif (method == "SMART_PC_N"):    
                     logits = base_model.module.classification_SMART(points, only_unmasked=False)      
-                    # logits = base_model.classification_SMART(points, only_unmasked=False)    
 
                 elif (method == "SMART_PC_P"):    
                     logits = base_model.module.classification_SMART_2(points, only_unmasked=False)          

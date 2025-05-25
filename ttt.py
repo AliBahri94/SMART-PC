@@ -91,12 +91,9 @@ def main(args):
         config.model.cls_dim = 55
     else:
         raise NotImplementedError
-    # args.disable_bn_adaptation = True
     args.disable_bn_adaptation = config.model.transformer_config.disable_bn_adaptation       
-    # args.batch_size_tta = 48
     args.batch_size_tta = config.model.transformer_config.batch_size_tta 
     args.batch_size = config.model.transformer_config.batch_size_adapt 
-    # config.model.transformer_config.mask_ratio = args.mask_ratio  # overwrite the mask_ratio configuration parameter  
     config.model.group_norm = args.group_norm
 
     args.split = 'test'

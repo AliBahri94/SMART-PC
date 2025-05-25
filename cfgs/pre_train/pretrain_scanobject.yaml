@@ -43,11 +43,10 @@ model : {
     dataset: "scanobject",
 
     ########## settings
-    method: "SMART_PC_P",                                                                            # SMART_PC_N , MATE, SMART_PC_N_MATE
-    normalize: "minus_center",                                                                 # minus_center     
+    method: "SMART_PC_N",                                                              # SMART_PC_N , MATE, SMART_PC_P
+    normalize: "None",                                                                 # None or minus_center     
     aug: "scale_transform", 
     repeat_data_SMART_PC: False,      
-    mask_input: False,
     mean_loss: False,
     alg_update: "None",  
     freez_decoder: False,           
