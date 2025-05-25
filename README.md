@@ -65,12 +65,13 @@ For Org-SO and MATE*, we used this [Google-Drive](https://drive.google.com/drive
 For TTT, go to `cfgs/tta/tta_<dataset_name>.yaml` and set the `tta_dataset_path` variable to the relative path of the dataset parent directory.  
 E.g. if your data for ModelNet-C is in `./data/tta_datasets/modelnet-c`, set the variable to `./data/tta_datasets`.  
 
-A jointly trained model can be used for test-time training by:  
+<p><strong><span style="color:#2a9d8f;">Online Mode:</span></strong> 
+Make sure <code>disable_bn_adaptation</code> is set to <code><strong>False</strong></code> in the config files.</p>
 ```
 CUDA_VISIBLE_DEVICES=0 python ttt.py --dataset_name <dataset_name> --online --grad_steps 1 --config cfgs/tta/tta_<dataset_name>.yaml --ckpts <path/to/pretrained/model>
 ```
-This will run the `TTT-Online (for one gradient step)`.
 
+standard mode:
 For running the `TTT-Standard`, following command can be used: 
 ```
 CUDA_VISIBLE_DEVICES=0 python ttt.py --dataset_name <dataset_name> --grad_steps 20 --config cfgs/tta/tta_<dataset_name>.yaml --ckpts <path/to/pretrained/model>
