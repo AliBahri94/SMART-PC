@@ -60,6 +60,47 @@ this [Google-Drive](https://drive.google.com/drive/folders/15Vf-6_tFQ44PXI1KetDG
 For Org-SO and MATE*, we used this [Google-Drive](https://drive.google.com/drive/folders/1TR46XXp63rtKxH5ufdbfI-X0ZXx8MyKm?usp=share_link).
 
 
+## Test-Time-Training (TTT)
+### Setting data paths 
+For TTT, go to `cfgs/tta/tta_<dataset_name>.yaml` and set the `tta_dataset_path` variable to the relative path of the dataset parent directory.  
+E.g. if your data for ModelNet-C is in `./data/tta_datasets/modelnet-c`, set the variable to `./data/tta_datasets`.  
+
+A jointly trained model can be used for test-time training by:  
+```
+CUDA_VISIBLE_DEVICES=0 python ttt.py --dataset_name <dataset_name> --online --grad_steps 1 --config cfgs/tta/tta_<dataset_name>.yaml --ckpts <path/to/pretrained/model>
+```
+This will run the `TTT-Online (for one gradient step)`.
+
+For running the `TTT-Standard`, following command can be used: 
+```
+CUDA_VISIBLE_DEVICES=0 python ttt.py --dataset_name <dataset_name> --grad_steps 20 --config cfgs/tta/tta_<dataset_name>.yaml --ckpts <path/to/pretrained/model>
+```
+
+## Training Models
+### Setting data paths
+To train a new model on one of the three datasets, go to `cfgs/dataset_configs/<dataset_name>.yaml` and set the `DATA_PATH` 
+variable in the file to the relative path of the dataset folder.  
+
+### Running training scripts
+After setting the paths, a model can be jointly trained by
+```
+CUDA_VISIBLE_DEVICES=0 python train.py --jt --config cfgs/pre_train/pretrain_<dataset_name>.yaml --dataset <dataset_name>
+```  
+A model for a supervised only baseline can be trained by
+```
+CUDA_VISIBLE_DEVICES=0 python train.py --only_cls --config cfgs/pre_train/pretrain_<dataset_name>.yaml --dataset <dataset_name>
+```  
+The trained models can then be found in the corresponding `experiments` subfolder.
+
+## Inference
+
+For a basic inference baseline without adaptation, use
+```
+CUDA_VISIBLE_DEVICES=0 python test.py --dataset_name <dataset_name> --config cfgs/pre_train/pretrain_<dataset_name>.yaml  --ckpts <path/to/pretrained/model> --test_source
+```
+Scripts for pretraining, testing and test-time training can also be found in `commands.sh`.
+
+
 ## Acknowledgement
 
 This project is based on Point-MAE ([paper](https://arxiv.org/abs/2203.06604), [code](https://github.com/Pang-Yatian/Point-MAE)), MATE ([paper](https://arxiv.org/pdf/2211.11432), [code](https://github.com/jmiemirza/MATE/tree/master)). Thanks for their wonderful works.
