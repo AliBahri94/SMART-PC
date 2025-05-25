@@ -45,7 +45,7 @@ model : {
     only_bn_update: False,   
     only_bn_ln_update: False,  
     all_params_update: True,   
-    disable_bn_adaptation: False,                          
+    disable_bn_adaptation: False,                            # Online mode: False          ,          Standard mode: True        
     repeat_data_MATE: True,                                                                                  
     repeat_data_SMART_PC: False,                                                                                       
     repeat_data_with_rotation_SMART_PC: True,  
@@ -53,8 +53,8 @@ model : {
     repeat_data_with_h_flip_SMART_PC: False,                                                                                                                                                                                                                                                                                                                                              
     repeat_data_with_scale_trans_SMART_PC: False,                 
     repeat_data_with_trans_SMART_PC: False,                                                                                                                                                                                                                                                                                                                              
-    batch_size_tta: 48,           
-    batch_size_adapt: 1,                                                                 
+    batch_size_tta: 48,                                             # number of repeated data for augmentation
+    batch_size_adapt: 1,                                            # main batch size                         
     iteration: 1,      
     time_cal: False,   
     mean_loss: False,          
