@@ -1,7 +1,7 @@
 <h1>SMART-PC - ICML 2025 🎉 </h1>
 <h3>Skeletal Model Adaptation for Robust Test-Time Training in Point Clouds</h3>
 
-📄 [Paper Link on arXiv](https://arxiv.org/pdf/2503.04953)
+📄 [Paper Link on arXiv](https://arxiv.org/pdf/2505.19546)
 
 ## Abstract
 
